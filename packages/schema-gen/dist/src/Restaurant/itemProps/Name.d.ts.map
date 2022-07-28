@@ -1,0 +1,1 @@
+{"version":3,"file":"Name.d.ts","sourceRoot":"","sources":["../../../../src/Restaurant/itemProps/Name.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,IAAI,EAAE,MAAM,kBAAkB,CAAC;AAExC,aAAK,IAAI,GAAG,IAAI,CAAC;IACf,QAAQ,EAAE,MAAM,CAAC;CAClB,CAAC,CAAC;AAEH,QAAA,MAAM,QAAQ,EAAE,IAAI,CAAC;IACnB,QAAQ,EAAE,MAAM,CAAC;CAClB,CAAgC,CAAC;AAElC,YAAY,EAAE,IAAI,EAAE,CAAC;AACrB,eAAe,QAAQ,CAAC"}

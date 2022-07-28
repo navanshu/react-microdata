@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "types": ["react", "node"]
+  },
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "es2020",
+      "moduleResolution": "Node"
+    },
+    "esm": true
+  }
+}

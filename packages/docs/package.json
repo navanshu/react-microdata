@@ -1,0 +1,19 @@
+{
+  "name": "react-schema-org-docs",
+  "version": "1.0.0",
+  "private": true,
+  "author": "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)",
+  "maintainers": [
+    "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)"
+  ],
+  "main": "dist",
+  "types": "types ",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "",
+    "build": ""
+  },
+  "dependencies": {
+    "schema": "*"
+  }
+}

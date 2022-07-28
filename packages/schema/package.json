@@ -1,0 +1,23 @@
+{
+  "name": "schema",
+  "version": "1.0.0",
+  "author": "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)",
+  "maintainers": [
+    "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)"
+  ],
+  "dependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "schema-gen": "*",
+    "ts-node": "^10.9.1"
+  },
+  "main": "dist",
+  "scripts": {
+    "schema-gen": "schema-gen",
+    "generate": "npm run schema-gen -- --file=./shema.json --dest=./gen",
+    "tsc": "tsc",
+    "dev": "",
+    "build": "npm run tsc"
+  }
+}

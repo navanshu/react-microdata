@@ -1,0 +1,35 @@
+{
+  "name": "schema-gen",
+  "version": "1.0.0",
+  "scripts": {
+    "tsc": "tsc",
+    "dev": "",
+    "build": "tsc -b"
+  },
+  "bin": {
+    "schema-gen": "bin/schema-gen.js"
+  },
+  "author": "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)",
+  "maintainers": [
+    "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "engineStrict": true,
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "ts-mixer": "^6.0.1",
+    "node_modules-path": "^2.0.5"
+  },
+  "devDependencies": {
+    "@types/argparse": "^2.0.10",
+    "ts-node": "^10.9.1"
+  },
+  "files": [
+    "dist/src/**/*"
+  ],
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts"
+}
