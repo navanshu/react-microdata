@@ -1,1 +1,0 @@
-{"version":3,"file":"RestaurantType.factory.d.ts","sourceRoot":"","sources":["../../../src/Restaurant/RestaurantType.factory.ts"],"names":[],"mappings":"AAAA,OAAO,4BAA4B,MAAM,oDAAoD,CAAC;AAE9F,cAAM,qBAAsB,SAAQ,4BAA4B;IAC9D,UAAU;CAGX;AAED,QAAA,MAAM,qBAAqB,uBAA8B,CAAC;AAE1D,OAAO,EAAE,qBAAqB,EAAE,CAAC;AACjC,eAAe,qBAAqB,CAAC"}

@@ -1,1 +1,0 @@
-{"version":3,"file":"ItemPropFactory.d.ts","sourceRoot":"","sources":["../../src/ItemPropFactory.ts"],"names":[],"mappings":"AAEA,cAAM,eAAe;IACnB,eAAe,CAAC,IAAI,EAAE,MAAM;IAM5B,qBAAqB,CAAC,EACpB,QAAQ,EACR,SAAS,GACV,EAAE;QACD,QAAQ,EAAE,MAAM,CAAC;QACjB,SAAS,CAAC,EAAE,MAAM,CAAC;KACpB;CA6CF;AAED,eAAe,eAAe,CAAC"}

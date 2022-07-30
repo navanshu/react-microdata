@@ -1,1 +1,0 @@
-{"version":3,"file":"ContactPoint.js","sourceRoot":"","sources":["../../../src/ContactPoint/ContactPoint.ts"],"names":[],"mappings":"AAAA,OAAO,SAAS,MAAM,gBAAgB,CAAC;AAEvC,MAAM,gBAAiB,SAAQ,SAAS;IACtC,WAAW;QACT,OAAO,IAAI,CAAC,qBAAqB,CAAC;YAChC,QAAQ,EAAE,aAAa;SACxB,CAAC,CAAC;IACL,CAAC;CACF;AAED,eAAe,gBAAgB,CAAC"}
