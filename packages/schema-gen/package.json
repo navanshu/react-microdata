@@ -27,9 +27,9 @@
     "@types/argparse": "^2.0.10",
     "ts-node": "^10.9.1"
   },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "files": [
     "dist/src/**/*"
-  ],
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts"
+  ]
 }

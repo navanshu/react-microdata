@@ -12,12 +12,19 @@
     "schema-gen": "*",
     "ts-node": "^10.9.1"
   },
-  "main": "dist",
   "scripts": {
     "schema-gen": "schema-gen",
-    "generate": "npm run schema-gen -- --file=./shema.json --dest=./gen",
+    "gen": "npm run schema-gen -- --file=./shema.json --dest=./src",
     "tsc": "tsc",
     "dev": "",
     "build": "npm run tsc"
-  }
+  },
+  "exports": {
+    "./": {
+      "types": "./dist/src/",
+      "require": "./dist/src/",
+      "import": "./dist/src/"
+    }
+  },
+  "files": ["dist/src/**/*"]
 }

@@ -17,22 +17,25 @@ const removeSchemaPrefix = (s) => {
 function capitalizeFirstLetter(word) {
     return word.charAt(0).toUpperCase() + word.slice(1);
 }
+function lowercaseFirstLetter(word) {
+    return word.charAt(0).toLowerCase() + word.slice(1);
+}
 const generateImports = (imports) => {
     if (!imports) {
         return "";
     }
     if (Array.isArray(imports)) {
         return [
-            ...imports.map((name) => `import ${name} from '../${name}/${name}';`),
+            ...imports.map((name) => `import ${name}Factory from '../${name}/${name}Factory';`),
         ].join("\n");
     }
-    return `import ${imports} from './${imports}';\n`;
+    return `import ${imports}Factory from './${imports}';\n`;
 };
 const generateProps = (props) => {
     return props
         .map((name) => {
-        return `${name}(){
-        return this.makeItemPropComponent({ itemProp: "${name}" })
+        return `${name}({ itemScope }: { itemScope?:string }){
+        return this.makeItemPropComponent({ itemProp: "${name}", itemScope })
       };`;
     })
         .join("\n");
@@ -47,8 +50,8 @@ const classTemplate = ({ name, extend, properties }) => {
   ${imports ? imports : ""}
    
   class ${name} extends Mixin(${Array.isArray(extend)
-        ? [...extend, { name: "ItemFactory" }]
-            .map((n) => n.name)
+        ? [...extend, { name: "Item" }]
+            .map((n) => `${n.name}Factory`)
             .filter(Boolean)
             .join(", ")
         : ""}){
@@ -62,18 +65,48 @@ const classTemplate = ({ name, extend, properties }) => {
   `;
 };
 const indexTemplate = ({ name }) => {
-    return `export { default as ${name} } from './${name}'`;
+    return `
+    export * from './itemProps';
+    export * from './${name}';
+  `;
 };
 const itemPropTemplate = (property, node) => {
     const { name } = node;
-    const { name: propName } = property;
+    const { name: propName, scopes } = property;
+    const imports = `import { ${name}Factory } from "../${name}Factory";`;
+    const exports = `export { ${capitalizeFirstLetter(propName)} };`;
+    const capName = capitalizeFirstLetter(propName);
+    if (scopes.length === 1) {
+        return `
+      ${imports}
+
+      const ${capName} = ${name}Factory.${propName}({ itemScope: "${scopes[0]}" });
+
+      ${exports}
+    `;
+    }
+    else if (scopes.length > 1) {
+        return `
+    ${imports}
+    
+    const ${capName} = {
+      ${scopes
+            .map((scopeName) => {
+            return `${scopeName}: ${name}Factory.${propName}({ itemScope: "${scopeName}" })`;
+        })
+            .join(",\n")}
+    };
+    
+    ${exports}
+   `;
+    }
     return `
-    import { ${name}Factory } from "../${name}";
-    
-    const ${capitalizeFirstLetter(propName)} = ${name}Factory.${propName}();
-    
-    export { ${capitalizeFirstLetter(propName)} };
-  `;
+      ${imports}
+      
+      const ${capName} = ${name}Factory.${propName}();
+      
+      ${exports}
+    `;
 };
 const generateFile = (path, node) => __awaiter(void 0, void 0, void 0, function* () {
     const createIndexFile = (path, node) => __awaiter(void 0, void 0, void 0, function* () {
@@ -87,7 +120,7 @@ const generateFile = (path, node) => __awaiter(void 0, void 0, void 0, function*
     });
     const createClassFile = (path, node) => __awaiter(void 0, void 0, void 0, function* () {
         const { name } = node;
-        const fileName = `${name}.ts`;
+        const fileName = `${name}Factory.ts`;
         const filePath = `${path}/${name}/${fileName}`;
         yield fs.writeFile(filePath, classTemplate(node));
     });
@@ -99,14 +132,36 @@ const generateFile = (path, node) => __awaiter(void 0, void 0, void 0, function*
         return fs.writeFile(`${path}/${node.name}/itemProps/${capitalizeFirstLetter(property.name)}.ts`, itemPropTemplate(property, node));
     });
     const createItemPropsFiles = (path, node) => __awaiter(void 0, void 0, void 0, function* () {
-        return Promise.all(node.properties.map((propName) => {
-            return createItemPropFile(path, propName, node);
+        return Promise.all(node.properties.map((property) => {
+            return createItemPropFile(path, property, node);
         }));
+    });
+    const createPropsIndexFile = (path, node) => __awaiter(void 0, void 0, void 0, function* () {
+        const filePath = `${path}/${node.name}/itemProps/index.ts`;
+        const writeFiles = (data) => __awaiter(void 0, void 0, void 0, function* () { return fs.writeFile(filePath, data); });
+        if (node.properties.length === 0) {
+            return writeFiles(`export {}`);
+        }
+        return writeFiles(`${node.properties
+            .map((prop) => {
+            return `export * from "./${capitalizeFirstLetter(prop.name)}";`;
+        })
+            .join("\n")}`);
+    });
+    const createItemTypeFile = (path, node) => __awaiter(void 0, void 0, void 0, function* () {
+        const { name } = node;
+        return fs.writeFile(`${path}/${name}/${name}.ts`, `
+      import { ${name}Factory } from './${name}Factory';
+      const ${name} = ${name}Factory.makeItemTypeComponent({ itemType: "${name}" });
+      export { ${name} };
+    `);
     });
     yield createFolder(path, node);
     yield createClassFile(path, node);
     yield createItemPropsFolder(path, node);
     yield createItemPropsFiles(path, node);
+    yield createPropsIndexFile(path, node);
+    yield createItemTypeFile(path, node);
     yield createIndexFile(path, node);
     return;
 });
@@ -116,6 +171,8 @@ const generateFiles = (rootPath, map) => __awaiter(void 0, void 0, void 0, funct
     }));
 });
 const sanitizeName = (name) => {
+    if (name.startsWith("schema:"))
+        return removeSchemaPrefix(name);
     return name === "3DModel" ? "ThreeModel" : name;
 };
 const transformGraph = (graph) => {
@@ -147,25 +204,40 @@ const transformGraph = (graph) => {
         }
         return acc;
     }, {});
+    const getRangeIncludes = (node) => {
+        if (!node["schema:rangeIncludes"]) {
+            return [];
+        }
+        if (Array.isArray(node["schema:rangeIncludes"])) {
+            return node["schema:rangeIncludes"].map((n) => sanitizeName(n["@id"]));
+        }
+        return [sanitizeName(node["schema:rangeIncludes"]["@id"])];
+    };
     graph.forEach((node) => {
-        if (node["@type"] === "rdf:Property") {
+        const getId = (node) => node["@id"];
+        const isProperty = node["@type"] === "rdf:Property";
+        if (isProperty) {
+            const propertyNode = node;
             let domainIncludes = [];
-            if (node["schema:domainIncludes"]) {
-                if (Array.isArray(node["schema:domainIncludes"])) {
-                    domainIncludes = node["schema:domainIncludes"].map((c) => {
-                        return sanitizeName(removeSchemaPrefix(c["@id"]));
+            if (propertyNode["schema:domainIncludes"]) {
+                if (Array.isArray(propertyNode["schema:domainIncludes"])) {
+                    domainIncludes = propertyNode["schema:domainIncludes"].map((c) => {
+                        const id = sanitizeName(removeSchemaPrefix(getId(c)));
+                        return id;
                     });
                 }
                 else {
                     domainIncludes = [
-                        sanitizeName(removeSchemaPrefix(node["schema:domainIncludes"]["@id"])),
+                        sanitizeName(removeSchemaPrefix(getId(propertyNode["schema:domainIncludes"]))),
                     ];
                 }
             }
             domainIncludes.forEach((domain) => {
+                const propertyName = sanitizeName(removeSchemaPrefix(getId(propertyNode)));
+                const scopes = getRangeIncludes(propertyNode);
                 classes[domain] = Object.assign(Object.assign({}, classes[domain]), { properties: [
                         ...classes[domain].properties,
-                        { name: sanitizeName(removeSchemaPrefix(node["@id"])) },
+                        { name: propertyName, scopes },
                     ] });
             });
         }

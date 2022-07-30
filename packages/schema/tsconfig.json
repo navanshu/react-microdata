@@ -4,14 +4,18 @@
     "composite": true,
     "outDir": "./dist",
     "baseUrl": ".",
+    "module": "ES6",
     "types": ["react", "node"]
   },
-  "exclude": ["node_modules", "dist"],
   "ts-node": {
     "compilerOptions": {
       "module": "es2020",
       "moduleResolution": "Node"
     },
     "esm": true
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
 }
