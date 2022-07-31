@@ -1,18 +1,18 @@
 {
-  "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "composite": true,
     "outDir": "./dist",
     "baseUrl": ".",
-    "module": "ES6",
-    "types": ["react", "node"]
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "es2020",
-      "moduleResolution": "Node"
-    },
-    "esm": true
+    "sourceMap": false,
+    "declarationMap": false,
+    "incremental": false,
+    "skipLibCheck": true,
+    "module": "NodeNext",
+    "types": ["react", "node"],
+    "strict": true,
+    "target": "es2015",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "declaration": true
   },
   "include": [
     "src/**/*"

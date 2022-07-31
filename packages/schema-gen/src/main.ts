@@ -1,4 +1,6 @@
-import fs from "fs/promises";
+import { writeFile, mkdir, copyFile, readFile } from "fs/promises";
+import { existsSync } from "fs";
+
 //@ts-ignore
 import getPath from "node_modules-path";
 
@@ -52,7 +54,7 @@ const classTemplate = ({ name, extend, properties }: any) => {
   import { Mixin } from 'ts-mixer';
   import ItemFactory from '../ItemFactory/ItemFactory';
   ${imports ? imports : ""}
-   
+
   class ${name} extends Mixin(${
     Array.isArray(extend)
       ? [...extend, { name: "Item" }]
@@ -63,15 +65,24 @@ const classTemplate = ({ name, extend, properties }: any) => {
   }){
   ${props}
   }
-  
+
   const ${name}Factory = new ${name}();
-  
+
   export { ${name}Factory };
   ${exportStr}
   `;
 };
 
 const indexTemplate = ({ name }: { name: string }) => {
+  // Review and the Comment types contain an itemProp with the same name as the type name.
+  // They conflict during the export.
+  // For this reason the Review and the Comment will get a suffix "Type".
+  if (name === 'Review' || name === 'Comment'){
+    return `
+    export * from './itemProps';
+    export * from './${name}Type';
+  `;
+  }
   return `
     export * from './itemProps';
     export * from './${name}';
@@ -87,9 +98,10 @@ type Node = {
   name: string;
   extend: { name: string }[];
   properties: Property[];
+  extendedProperties: Property[];
 };
 
-const itemPropTemplate = (property: Property, node: Node) => {
+const itemPropTemplate = (property: Property, node: Node, map: any) => {
   const { name } = node;
   const { name: propName, scopes } = property;
 
@@ -99,6 +111,15 @@ const itemPropTemplate = (property: Property, node: Node) => {
   const capName = capitalizeFirstLetter(propName);
 
   if (scopes.length === 1) {
+    if (scopes[0] === "Text") {
+      return `
+      ${imports}
+
+      const ${capName} = ${name}Factory.${propName}({ });
+
+      ${exports}
+    `;
+    }
     return `
       ${imports}
 
@@ -106,13 +127,36 @@ const itemPropTemplate = (property: Property, node: Node) => {
 
       ${exports}
     `;
-  } else if (scopes.length > 1) {
+  }
+  if (scopes.length > 1) {
+    if (scopes.includes("Text")) {
+      // remove Text scope
+      const s = scopes.filter((n) => n !== "Text");
+
+      // return a React component for the Text scope. Other scopes as compound components.
+      return `
+        ${imports}
+        
+        const ${capName} = ${name}Factory.${propName}({});
+        ${s
+          .map((n) => {
+            return `${capName}.${n} =  ${name}Factory.${propName}({ itemScope: "${n}" })`;
+          })
+          .join(";\n")}
+        
+       
+        ${exports}
+      `;
+    }
     return `
     ${imports}
     
     const ${capName} = {
       ${scopes
         .map((scopeName) => {
+          if (scopeName === "Text") {
+            return `${scopeName}: ${name}Factory.${propName}({})`;
+          }
           return `${scopeName}: ${name}Factory.${propName}({ itemScope: "${scopeName}" })`;
         })
         .join(",\n")}
@@ -130,17 +174,17 @@ const itemPropTemplate = (property: Property, node: Node) => {
     `;
 };
 
-const generateFile = async (path: string, node: Node) => {
+const generateFile = async (path: string, node: Node, map: any) => {
   const createIndexFile = async (path: string, node: Node) => {
     const { name: folderName } = node;
 
     const indexPath = `${path}/${folderName}/index.ts`;
-    await fs.writeFile(indexPath, indexTemplate(node));
+    await writeFile(indexPath, indexTemplate(node));
   };
 
   const createFolder = async (path: string, node: Node) => {
     const { name: folderName } = node;
-    await fs.mkdir(`${path}/${folderName}`);
+    await mkdir(`${path}/${folderName}`);
   };
 
   const createClassFile = async (path: string, node: Node) => {
@@ -149,12 +193,12 @@ const generateFile = async (path: string, node: Node) => {
 
     const filePath = `${path}/${name}/${fileName}`;
 
-    await fs.writeFile(filePath, classTemplate(node));
+    await writeFile(filePath, classTemplate(node));
   };
 
   const createItemPropsFolder = async (path: string, node: Node) => {
     const { name: folderName } = node;
-    await fs.mkdir(`${path}/${folderName}/itemProps`);
+    await mkdir(`${path}/${folderName}/itemProps`);
   };
 
   const createItemPropFile = async (
@@ -162,31 +206,39 @@ const generateFile = async (path: string, node: Node) => {
     property: Property,
     node: Node
   ) => {
-    return fs.writeFile(
-      `${path}/${node.name}/itemProps/${capitalizeFirstLetter(
-        property.name
-      )}.ts`,
-      itemPropTemplate(property, node)
-    );
+    const p = `${path}/${node.name}/itemProps/${capitalizeFirstLetter(
+      property.name
+    )}.ts`;
+
+    if (existsSync(p)) {
+      return;
+    }
+
+    return writeFile(p, itemPropTemplate(property, node, map));
   };
 
   const createItemPropsFiles = async (path: string, node: Node) => {
-    return Promise.all(
-      node.properties.map((property: Property) => {
+    return Promise.all([
+      ...node.properties.map((property: Property) => {
         return createItemPropFile(path, property, node);
-      })
-    );
+      }),
+      ...node.extendedProperties.map((property) => {
+        return createItemPropFile(path, property, node);
+      }),
+    ]);
   };
 
   const createPropsIndexFile = async (path: string, node: Node) => {
     const filePath = `${path}/${node.name}/itemProps/index.ts`;
-    const writeFiles = async (data: string) => fs.writeFile(filePath, data);
+    const write = async (data: string) => writeFile(filePath, data);
 
-    if (node.properties.length === 0) {
-      return writeFiles(`export {}`);
+    const allProps = [...node.properties, ...node.extendedProperties];
+
+    if (allProps.length === 0) {
+      return write(`export {}`);
     }
-    return writeFiles(
-      `${node.properties
+    return write(
+      `${allProps
         .map((prop: Property) => {
           return `export * from "./${capitalizeFirstLetter(prop.name)}";`;
         })
@@ -197,7 +249,18 @@ const generateFile = async (path: string, node: Node) => {
   const createItemTypeFile = async (path: string, node: Node) => {
     const { name } = node;
 
-    return fs.writeFile(
+    if (name === 'Review' || name === 'Comment'){
+      return writeFile(
+        `${path}/${name}/${name}Type.ts`,
+        `
+      import { ${name}Factory } from './${name}Factory';
+      const ${name}Type = ${name}Factory.makeItemTypeComponent({ itemType: "${name}" });
+      export { ${name}Type };
+    `
+      );
+    }
+
+    return writeFile(
       `${path}/${name}/${name}.ts`,
       `
       import { ${name}Factory } from './${name}Factory';
@@ -226,7 +289,7 @@ const generateFile = async (path: string, node: Node) => {
 const generateFiles = async (rootPath: string, map: any) => {
   return Promise.all(
     Object.values(map).map((node: any) => {
-      return generateFile(rootPath, node);
+      return generateFile(rootPath, node, map);
     })
   );
 };
@@ -248,7 +311,7 @@ type GraphNode = {
 };
 
 const transformGraph = (graph: any) => {
-  const classes = graph.reduce((acc: any, node: any) => {
+  let classes = graph.reduce((acc: any, node: any) => {
     const classKey = "rdfs:Class";
     const type = node["@type"];
 
@@ -294,10 +357,11 @@ const transformGraph = (graph: any) => {
     return [sanitizeName(node["schema:rangeIncludes"]["@id"])];
   };
 
-  graph.forEach((node: any) => {
+  graph.forEach((node: any, index: number, graph: any) => {
     const getId = (node: GraphNode) => node["@id"];
 
     const isProperty = node["@type"] === "rdf:Property";
+
     if (isProperty) {
       const propertyNode = node;
       let domainIncludes: any = [];
@@ -334,12 +398,38 @@ const transformGraph = (graph: any) => {
     }
   });
 
+  // collect properties from the extended nodes
+  const accumulateExtendedProperties = (node: any) => {
+    let res = node.properties.reduce((acc: any, prop: any) => {
+      return {
+        ...acc,
+        [prop.name]: prop,
+      };
+    }, {});
+
+    node.extend.forEach(({ name }: { name: string }) => {
+      res = { ...res, ...accumulateExtendedProperties(classes[name]) };
+    });
+
+    return res;
+  };
+
+  classes = Object.values(classes).reduce((acc: any, node: any) => {
+    return {
+      ...acc,
+      [node.name]: {
+        ...node,
+        extendedProperties: Object.values(accumulateExtendedProperties(node)),
+      },
+    };
+  }, {});
+
   return classes;
 };
 
 const copyItemFactory = async (dest: string) => {
-  await fs.mkdir(`${dest}/ItemFactory`);
-  return fs.copyFile(
+  await mkdir(`${dest}/ItemFactory`);
+  return copyFile(
     `${getPath()}/schema-gen/src/ItemFactory.ts`,
     `${dest}/ItemFactory/ItemFactory.ts`
   );
@@ -348,13 +438,14 @@ const copyItemFactory = async (dest: string) => {
 const main = async (args?: any) => {
   const file = args.file;
   const dest = args.dest;
-  const schema = await fs.readFile(file, "utf-8");
+  const schema = await readFile(file, "utf-8");
 
   const schemaJson = JSON.parse(schema);
 
   const graphArray = schemaJson["@graph"];
 
   const map = transformGraph(graphArray);
+  // console.log(map["WinAction"]);
 
   await generateFiles(dest, map);
 

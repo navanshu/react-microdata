@@ -1,13 +1,14 @@
 const path = require("path");
 const HtmlPlugin = require("html-webpack-plugin");
 
-module.exports = () => {
+module.exports = ({production}) => {
+
   return {
     entry: {
       app: "./src/index.tsx",
     },
     target: "web",
-    mode: "development",
+    mode: production?"production":"development",
     module: {
       rules: [
         {

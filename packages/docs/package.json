@@ -11,7 +11,7 @@
   "scripts": {
     "tsc": "tsc",
     "dev": "webpack-dev-server --open",
-    "build": "webpack --config webpack.config.js"
+    "build": "webpack --config webpack.config.js --env=production"
   },
   "dependencies": {
     "react": "^18.2.0",
