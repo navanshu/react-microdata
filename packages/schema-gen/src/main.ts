@@ -1,9 +1,21 @@
 import { writeFile, mkdir, copyFile, readFile } from "fs/promises";
 import { existsSync } from "fs";
+import { resolve } from "path";
+
+const packageName = "@react-microdata";
 
 //@ts-ignore
 import getPath from "node_modules-path";
 
+function upperCaseArray(input: string) {
+  const result = input.replace(/([A-Z]+)/g, ",$1").replace(/^,/, "");
+  return result.split(",");
+}
+const transformToKebabCase = (value: string) => {
+  return upperCaseArray(value)
+    .map((c) => c.toLowerCase())
+    .join("-");
+};
 const removeSchemaPrefix = (s: string) => {
   const [, res] = s.split(":");
   return res;
@@ -17,6 +29,39 @@ function lowercaseFirstLetter(word: string) {
   return word.charAt(0).toLowerCase() + word.slice(1);
 }
 
+const copyPackageJSON = async (
+  path: string,
+  node: { name: string; extend: { name: string }[] }
+) => {
+  const packageJsonPath = `${resolve()}/package.template.json`;
+
+  const packageJson: any = JSON.parse(await readFile(packageJsonPath, "utf-8"));
+  packageJson.name = `${packageName}/${upperCaseArray(node.name)
+    .map((n) => n.toLowerCase())
+    .join("-")}`;
+  const deps = node.extend.reduce((acc, imports) => {
+    return {
+      ...acc,
+      [`${packageName}/${transformToKebabCase(imports.name)}`]: "*",
+    };
+  }, {});
+  packageJson.types = `./dist/${node.name}/index.d.ts`;
+  packageJson.dependencies = { ...packageJson.dependencies, ...deps };
+
+  return writeFile(
+    `${path}/${node.name}/package.json`,
+    JSON.stringify(packageJson)
+  );
+};
+
+const copyTSConfig = async (path: string, node: { name: string }) => {
+  const tsConfigPath = `${resolve()}/tsconfig.template.json`;
+
+  const tsConfig: any = await readFile(tsConfigPath, "utf-8");
+  //
+  return writeFile(`${path}/${node.name}/tsconfig.json`, tsConfig);
+};
+
 const generateImports = (imports: string | string[] | undefined) => {
   if (!imports) {
     return "";
@@ -25,7 +70,10 @@ const generateImports = (imports: string | string[] | undefined) => {
   if (Array.isArray(imports)) {
     return [
       ...imports.map(
-        (name) => `import ${name}Factory from '../${name}/${name}Factory';`
+        (name) =>
+          `import { ${name}Factory } from '${packageName}/${transformToKebabCase(
+            name
+          )}';`
       ),
     ].join("\n");
   }
@@ -52,7 +100,7 @@ const classTemplate = ({ name, extend, properties }: any) => {
 
   return `
   import { Mixin } from 'ts-mixer';
-  import ItemFactory from '../ItemFactory/ItemFactory';
+  import ItemFactory from '${packageName}/item-factory';
   ${imports ? imports : ""}
 
   class ${name} extends Mixin(${
@@ -73,19 +121,81 @@ const classTemplate = ({ name, extend, properties }: any) => {
   `;
 };
 
-const indexTemplate = ({ name }: { name: string }) => {
-  // Review and the Comment types contain an itemProp with the same name as the type name.
-  // They conflict during the export.
-  // For this reason the Review and the Comment will get a suffix "Type".
-  if (name === 'Review' || name === 'Comment'){
+const indexTemplate = ({
+  name,
+  properties,
+  extendedProperties,
+}: {
+  name: string;
+  properties: { name: string }[];
+  extendedProperties: { name: string }[];
+}) => {
+  const importProps = Object.keys({
+    ...properties.reduce((acc, { name }) => {
+      return {
+        ...acc,
+        [capitalizeFirstLetter(name)]: name,
+      };
+    }, {}),
+    ...extendedProperties.reduce((acc, { name }) => {
+      return {
+        ...acc,
+        [capitalizeFirstLetter(name)]: name,
+      };
+    }, {}),
+  })
+    .map((name) => {
+      return `import { ${name} } from './src/itemProps/${name}'`;
+    })
+    .join(";\n");
+
+  const propNames = Object.keys({
+    ...properties.reduce((acc, { name }) => {
+      return {
+        ...acc,
+        [capitalizeFirstLetter(name)]: name,
+      };
+    }, {}),
+    ...extendedProperties.reduce((acc, { name }) => {
+      return {
+        ...acc,
+        [capitalizeFirstLetter(name)]: name,
+      };
+    }, {}),
+  }).join(",\n");
+
+  if (name === "Review" || name === "Comment") {
     return `
-    export * from './itemProps';
-    export * from './${name}Type';
-  `;
+      ${importProps}
+      import { ${name}Type } from './src/${name}Type';
+      import ${name}Factory from './src/${name}Factory';
+      
+      export {
+        ${name}Factory,
+        ${name}Type,
+        ${propNames}
+      };
+      export default {
+        ${name}Type,
+        ${propNames}  
+      }
+    `;
   }
+
   return `
-    export * from './itemProps';
-    export * from './${name}';
+    ${importProps}
+    import { ${name} } from './src/${name}';
+    import ${name}Factory from './src/${name}Factory';
+    
+    export {
+      ${name}Factory,
+      ${name},
+      ${propNames}
+    };
+    export default {
+      ${name},
+      ${propNames}  
+    }
   `;
 };
 
@@ -185,20 +295,21 @@ const generateFile = async (path: string, node: Node, map: any) => {
   const createFolder = async (path: string, node: Node) => {
     const { name: folderName } = node;
     await mkdir(`${path}/${folderName}`);
+    await mkdir(`${path}/${folderName}/src`);
   };
 
   const createClassFile = async (path: string, node: Node) => {
     const { name } = node;
     const fileName = `${name}Factory.ts`;
 
-    const filePath = `${path}/${name}/${fileName}`;
+    const filePath = `${path}/${name}/src/${fileName}`;
 
     await writeFile(filePath, classTemplate(node));
   };
 
   const createItemPropsFolder = async (path: string, node: Node) => {
     const { name: folderName } = node;
-    await mkdir(`${path}/${folderName}/itemProps`);
+    await mkdir(`${path}/${folderName}/src/itemProps`);
   };
 
   const createItemPropFile = async (
@@ -206,7 +317,7 @@ const generateFile = async (path: string, node: Node, map: any) => {
     property: Property,
     node: Node
   ) => {
-    const p = `${path}/${node.name}/itemProps/${capitalizeFirstLetter(
+    const p = `${path}/${node.name}/src/itemProps/${capitalizeFirstLetter(
       property.name
     )}.ts`;
 
@@ -229,7 +340,7 @@ const generateFile = async (path: string, node: Node, map: any) => {
   };
 
   const createPropsIndexFile = async (path: string, node: Node) => {
-    const filePath = `${path}/${node.name}/itemProps/index.ts`;
+    const filePath = `${path}/${node.name}/src/itemProps/index.ts`;
     const write = async (data: string) => writeFile(filePath, data);
 
     const allProps = [...node.properties, ...node.extendedProperties];
@@ -249,9 +360,9 @@ const generateFile = async (path: string, node: Node, map: any) => {
   const createItemTypeFile = async (path: string, node: Node) => {
     const { name } = node;
 
-    if (name === 'Review' || name === 'Comment'){
+    if (name === "Review" || name === "Comment") {
       return writeFile(
-        `${path}/${name}/${name}Type.ts`,
+        `${path}/${name}/src/${name}Type.ts`,
         `
       import { ${name}Factory } from './${name}Factory';
       const ${name}Type = ${name}Factory.makeItemTypeComponent({ itemType: "${name}" });
@@ -261,7 +372,7 @@ const generateFile = async (path: string, node: Node, map: any) => {
     }
 
     return writeFile(
-      `${path}/${name}/${name}.ts`,
+      `${path}/${name}/src/${name}.ts`,
       `
       import { ${name}Factory } from './${name}Factory';
       const ${name} = ${name}Factory.makeItemTypeComponent({ itemType: "${name}" });
@@ -271,6 +382,7 @@ const generateFile = async (path: string, node: Node, map: any) => {
   };
 
   await createFolder(path, node);
+
   await createClassFile(path, node);
 
   await createItemPropsFolder(path, node);
@@ -282,6 +394,10 @@ const generateFile = async (path: string, node: Node, map: any) => {
   await createItemTypeFile(path, node);
 
   await createIndexFile(path, node);
+
+  await copyPackageJSON(path, node);
+
+  await copyTSConfig(path, node);
 
   return;
 };
@@ -429,9 +545,19 @@ const transformGraph = (graph: any) => {
 
 const copyItemFactory = async (dest: string) => {
   await mkdir(`${dest}/ItemFactory`);
-  return copyFile(
-    `${getPath()}/schema-gen/src/ItemFactory.ts`,
-    `${dest}/ItemFactory/ItemFactory.ts`
+  await mkdir(`${dest}/ItemFactory/src`);
+
+  await copyPackageJSON(dest, { name: "ItemFactory", extend: [] });
+  await copyTSConfig(dest, { name: "ItemFactory" });
+
+  await copyFile(
+    `${getPath()}/${packageName}/gen/src/ItemFactory.ts`,
+    `${dest}/ItemFactory/src/ItemFactory.ts`
+  );
+
+  return writeFile(
+    `${dest}/ItemFactory/index.ts`,
+    `import {default as ItemFactory} from './src/ItemFactory'; export default ItemFactory;`
   );
 };
 
@@ -445,7 +571,6 @@ const main = async (args?: any) => {
   const graphArray = schemaJson["@graph"];
 
   const map = transformGraph(graphArray);
-  // console.log(map["WinAction"]);
 
   await generateFiles(dest, map);
 

@@ -1,7 +1,7 @@
 {
-  "name": "react-schema-org-docs",
+  "name": "@react-microdata/docs",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "author": "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)",
   "maintainers": [
     "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)"
@@ -14,9 +14,11 @@
     "build": "webpack --config webpack.config.js --env=production"
   },
   "dependencies": {
+    "@react-microdata/about-page": "*",
+    "@react-microdata/postal-address": "*",
+    "@react-microdata/person": "*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "schema": "*"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.5.0",
@@ -25,5 +27,8 @@
     "webpack-dev-server": "^4.9.3",
     "webpack-cli": "^4.10.0",
     "typescript": "^4.7.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

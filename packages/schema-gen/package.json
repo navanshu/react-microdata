@@ -1,5 +1,5 @@
 {
-  "name": "schema-gen",
+  "name": "@react-microdata/gen",
   "version": "1.0.0",
   "scripts": {
     "tsc": "tsc",
@@ -17,6 +17,7 @@
   "engines": {
     "node": ">=14.0.0"
   },
+  "private": false,
   "engineStrict": true,
   "dependencies": {
     "argparse": "^2.0.1",
@@ -31,5 +32,8 @@
   "types": "./dist/src/index.d.ts",
   "files": [
     "dist/src/**/*"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -1,42 +1,34 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-//@ts-ignore
-import { Name, Person, Address } from "schema/Person";
-
-//@ts-ignore
-import {AddressLocality} from 'schema/PostalAddress'
-
-//@ts-ignore
-import {Winery, ServesCuisine} from 'schema/Winery';
-
-//@ts-ignore
-import { Restaurant, StarRating } from 'schema/Restaurant';
-
-import { RatingValue } from "schema/Rating";
-
+// import PersonSchema, { Person, Address, Name } from "@react-microdata/person";
+// import { AddressLocality } from "@react-microdata/postal-address";
+import { AboutPage } from "@react-microdata/about-page";
 
 const Index = () => {
   return (
     <div>
+      <AboutPage>page</AboutPage>
 
-      <Winery>
-        <ServesCuisine>Greek</ServesCuisine>
-        <StarRating>
-          <RatingValue content={"4"}>****</RatingValue>
-        </StarRating>
-      </Winery>
-      <Person>
-        <Name>Stan</Name>
-        <Address.PostalAddress>
-          <AddressLocality>Address</AddressLocality>
-        </Address.PostalAddress>
-      </Person>
-      <Restaurant>
-        <StarRating>
-            <RatingValue content={"4"}>****</RatingValue>
-        </StarRating>
-      </Restaurant>
+      {/*<Winery>*/}
+      {/*  <ServesCuisine>Greek</ServesCuisine>*/}
+      {/*  <StarRating>*/}
+      {/*    <RatingValue content={"4"}>****</RatingValue>*/}
+      {/*  </StarRating>*/}
+      {/*</Winery>*/}
+
+      {/*<Person>*/}
+      {/*  <Name>Stan</Name>*/}
+      {/*  <Address.PostalAddress>*/}
+      {/*    <AddressLocality>Passau</AddressLocality>*/}
+      {/*  </Address.PostalAddress>*/}
+      {/*</Person>*/}
+
+      {/*<Restaurant>*/}
+      {/*  <StarRating>*/}
+      {/*      <RatingValue content={"4"}>****</RatingValue>*/}
+      {/*  </StarRating>*/}
+      {/*</Restaurant>*/}
     </div>
   );
 };

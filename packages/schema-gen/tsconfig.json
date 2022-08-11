@@ -3,7 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
-    "types": ["react", "node"]
+    "types": ["react", "node"],
+    "rootDir": "."
   },
   "include": [
     "./src/**/*"

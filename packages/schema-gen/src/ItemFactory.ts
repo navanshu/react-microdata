@@ -4,7 +4,7 @@ class ItemPropFactory {
   makeDisplayName(name: string) {
     // @ts-ignore
     const [firstLetter, ...rest] = name;
-    return `${firstLetter.toUpperCase()}${rest.join("")}ItemProp`;
+    return `${firstLetter.toUpperCase()}${rest}ItemProp`;
   }
 
   makeItemPropComponent({
