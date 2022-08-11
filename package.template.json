@@ -4,8 +4,7 @@
   "scripts": {
     "tsc": "tsc",
     "dev": "",
-    "webpack": "webpack",
-    "build": "npm run webpack"
+    "build": "npm run tsc"
   },
   "author": "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)",
   "maintainers": [
@@ -16,7 +15,8 @@
   "devDependencies": {},
   "main": "./dist/index.js",
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "./index.ts"
   ],
   "publishConfig": {
     "access": "public"

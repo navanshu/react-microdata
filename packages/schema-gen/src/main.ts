@@ -45,7 +45,7 @@ const copyPackageJSON = async (
       [`${packageName}/${transformToKebabCase(imports.name)}`]: "*",
     };
   }, {});
-  packageJson.types = `./dist/${node.name}/index.d.ts`;
+  packageJson.types = `./dist/index.d.ts`;
   packageJson.dependencies = { ...packageJson.dependencies, ...deps };
 
   return writeFile(
@@ -89,36 +89,6 @@ const generateProps = (props: string[]) => {
       };`;
     })
     .join("\n");
-};
-
-const classTemplate = ({ name, extend, properties }: any) => {
-  let exportStr = `export default ${name};\n`;
-
-  const imports: any = generateImports(extend.map((n: any) => n.name));
-
-  const props = generateProps(properties.map((n: any) => n.name));
-
-  return `
-  import { Mixin } from 'ts-mixer';
-  import ItemFactory from '${packageName}/item-factory';
-  ${imports ? imports : ""}
-
-  class ${name} extends Mixin(${
-    Array.isArray(extend)
-      ? [...extend, { name: "Item" }]
-          .map((n: any) => `${n.name}Factory`)
-          .filter(Boolean)
-          .join(", ")
-      : ""
-  }){
-  ${props}
-  }
-
-  const ${name}Factory = new ${name}();
-
-  export { ${name}Factory };
-  ${exportStr}
-  `;
 };
 
 const indexTemplate = ({
@@ -168,10 +138,8 @@ const indexTemplate = ({
     return `
       ${importProps}
       import { ${name}Type } from './src/${name}Type';
-      import ${name}Factory from './src/${name}Factory';
       
       export {
-        ${name}Factory,
         ${name}Type,
         ${propNames}
       };
@@ -185,10 +153,8 @@ const indexTemplate = ({
   return `
     ${importProps}
     import { ${name} } from './src/${name}';
-    import ${name}Factory from './src/${name}Factory';
     
     export {
-      ${name}Factory,
       ${name},
       ${propNames}
     };
@@ -215,27 +181,50 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
   const { name } = node;
   const { name: propName, scopes } = property;
 
-  const imports = `import { ${name}Factory } from "../${name}Factory";`;
-  const exports = `export { ${capitalizeFirstLetter(propName)} };`;
-
   const capName = capitalizeFirstLetter(propName);
+
+  const imports = `import { createElement } from "react"`;
+  const exports = `export { ${capName} }`;
 
   if (scopes.length === 1) {
     if (scopes[0] === "Text") {
       return `
-      ${imports}
+      ${imports};
+      //@ts-ignore
+      const ${capName} = ({ as = 'div', children, ...props}) => {
+        return createElement(
+          as,
+          {
+            itemProp: '${propName}',
+            ...props,
+          },
+          children
+        )
+      }
 
-      const ${capName} = ${name}Factory.${propName}({ });
-
-      ${exports}
+      ${exports};
     `;
     }
     return `
-      ${imports}
-
-      const ${capName} = ${name}Factory.${propName}({ itemScope: "${scopes[0]}" });
-
-      ${exports}
+      ${imports};
+       
+       const ${capName} = {
+         //@ts-ignore
+        ${scopes[0]}: ({ as = 'div', children, ...props}) => {
+        return createElement(
+          as,
+          {
+            itemProp: "${propName}",
+            itemScope: true,
+            itemType: "https://schema.org/${scopes[0]}",
+            ...props,
+          },
+          children
+        )
+      }
+       };
+      
+      ${exports};
     `;
   }
   if (scopes.length > 1) {
@@ -245,17 +234,40 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
 
       // return a React component for the Text scope. Other scopes as compound components.
       return `
-        ${imports}
+        ${imports};
         
-        const ${capName} = ${name}Factory.${propName}({});
+        //@ts-ignore
+        const ${capName} = ({ as = 'div', children, ...props}) => {
+          return createElement(
+            as,
+            {
+              itemProp: '${propName}',
+              ...props,
+            },
+            children
+          )
+        }
+        
         ${s
           .map((n) => {
-            return `${capName}.${n} =  ${name}Factory.${propName}({ itemScope: "${n}" })`;
+            return `
+            //@ts-ignore
+            ${capName}.${n} = ({ as = 'div', children, ...props }) => {
+            return createElement(
+              as,
+              {
+                itemProp: "${propName}",
+                itemScope: true,
+                itemType: "https://schema.org/${n}",
+                ...props
+              },
+              children
+            )
+          }`;
           })
           .join(";\n")}
-        
-       
-        ${exports}
+         
+        ${exports};
       `;
     }
     return `
@@ -265,9 +277,33 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
       ${scopes
         .map((scopeName) => {
           if (scopeName === "Text") {
-            return `${scopeName}: ${name}Factory.${propName}({})`;
+            return `
+            //@ts-ignore
+            ${scopeName}: ({ as = 'div', children, ...props}) => {
+              return createElement(
+                as,
+                {
+                  itemProp: '${propName}',
+                  ...props,
+                },
+                children
+              )
+            }`;
           }
-          return `${scopeName}: ${name}Factory.${propName}({ itemScope: "${scopeName}" })`;
+          return `
+          //@ts-ignore
+          ${scopeName}: ({ as = 'div', children, ...props }) => {
+            return createElement(
+              as,
+              {
+                itemProp: "${propName}",
+                itemScope: true,
+                itemType: "https://schema.org/${scopeName}",
+                ...props
+              },
+              children
+            )
+          }`;
         })
         .join(",\n")}
     };
@@ -276,11 +312,21 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
    `;
   }
   return `
-      ${imports}
+      ${imports};
       
-      const ${capName} = ${name}Factory.${propName}();
+      //@ts-ignore
+      const ${capName} = ({ as = 'div', children, ...props}) => {
+        return createElement(
+            as,
+            {
+              itemProp: '${propName}',
+              ...props,
+            },
+            children
+        )
+      };
       
-      ${exports}
+      ${exports};
     `;
 };
 
@@ -296,15 +342,6 @@ const generateFile = async (path: string, node: Node, map: any) => {
     const { name: folderName } = node;
     await mkdir(`${path}/${folderName}`);
     await mkdir(`${path}/${folderName}/src`);
-  };
-
-  const createClassFile = async (path: string, node: Node) => {
-    const { name } = node;
-    const fileName = `${name}Factory.ts`;
-
-    const filePath = `${path}/${name}/src/${fileName}`;
-
-    await writeFile(filePath, classTemplate(node));
   };
 
   const createItemPropsFolder = async (path: string, node: Node) => {
@@ -364,26 +401,50 @@ const generateFile = async (path: string, node: Node, map: any) => {
       return writeFile(
         `${path}/${name}/src/${name}Type.ts`,
         `
-      import { ${name}Factory } from './${name}Factory';
-      const ${name}Type = ${name}Factory.makeItemTypeComponent({ itemType: "${name}" });
-      export { ${name}Type };
-    `
+          import { createElement } from 'react';
+          
+          //@ts-ignore
+          const ${name}Type = ({ as = 'div', children, ...props }) => {
+            return createElement(
+              as,
+              {
+                itemScope: true,
+                itemType: 'https://schema.org/${name}',
+                ...props
+              },
+              children
+            );
+          };
+          
+          export { ${name}Type }; 
+        `
       );
     }
 
     return writeFile(
       `${path}/${name}/src/${name}.ts`,
       `
-      import { ${name}Factory } from './${name}Factory';
-      const ${name} = ${name}Factory.makeItemTypeComponent({ itemType: "${name}" });
-      export { ${name} };
+      import { createElement } from 'react';
+      
+      //@ts-ignore
+      const ${name} = ({ as = 'div', children, ...props }) => {
+        return createElement(
+          as,
+          {
+            itemScope: true,
+            itemType: 'https://schema.org/${name}',
+            ...props
+          },
+          children
+        );
+      };
+      
+      export { ${name} }; 
     `
     );
   };
 
   await createFolder(path, node);
-
-  await createClassFile(path, node);
 
   await createItemPropsFolder(path, node);
 
