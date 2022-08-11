@@ -28,6 +28,13 @@ import {
   Address as WineryAddress,
 } from "@react-microdata/winery";
 
+import {
+  WebPage,
+  MainContentOfPage,
+  DatePublished,
+} from "@react-microdata/web-page";
+import WebPageComponent from "./components/WebPage/WebPage";
+
 const Index = () => {
   return (
     <div>
@@ -63,6 +70,8 @@ const Index = () => {
           <AddressLocality>Passau</AddressLocality>
         </Address.PostalAddress>
       </Person>
+
+      <WebPageComponent />
     </div>
   );
 };

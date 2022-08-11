@@ -39,14 +39,8 @@ const copyPackageJSON = async (
   packageJson.name = `${packageName}/${upperCaseArray(node.name)
     .map((n) => n.toLowerCase())
     .join("-")}`;
-  const deps = node.extend.reduce((acc, imports) => {
-    return {
-      ...acc,
-      [`${packageName}/${transformToKebabCase(imports.name)}`]: "*",
-    };
-  }, {});
+
   packageJson.types = `./dist/index.d.ts`;
-  packageJson.dependencies = { ...packageJson.dependencies, ...deps };
 
   return writeFile(
     `${path}/${node.name}/package.json`,
@@ -228,12 +222,13 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
     `;
   }
   if (scopes.length > 1) {
-    if (scopes.includes("Text")) {
-      // remove Text scope
-      const s = scopes.filter((n) => n !== "Text");
+    const s = scopes.filter((n) => n !== "Text");
 
-      // return a React component for the Text scope. Other scopes as compound components.
-      return `
+    // remove Text scope
+
+    // return a React component for the Text scope. Other scopes as compound components.
+    // this allows Text type on a property to be a simple text.
+    return `
         ${imports};
         
         //@ts-ignore
@@ -269,47 +264,6 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
          
         ${exports};
       `;
-    }
-    return `
-    ${imports}
-    
-    const ${capName} = {
-      ${scopes
-        .map((scopeName) => {
-          if (scopeName === "Text") {
-            return `
-            //@ts-ignore
-            ${scopeName}: ({ as = 'div', children, ...props}) => {
-              return createElement(
-                as,
-                {
-                  itemProp: '${propName}',
-                  ...props,
-                },
-                children
-              )
-            }`;
-          }
-          return `
-          //@ts-ignore
-          ${scopeName}: ({ as = 'div', children, ...props }) => {
-            return createElement(
-              as,
-              {
-                itemProp: "${propName}",
-                itemScope: true,
-                itemType: "https://schema.org/${scopeName}",
-                ...props
-              },
-              children
-            )
-          }`;
-        })
-        .join(",\n")}
-    };
-    
-    ${exports}
-   `;
   }
   return `
       ${imports};

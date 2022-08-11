@@ -13,7 +13,13 @@
     "noEmit": false,
     "jsx": "react-jsx"
   },
-  "exclude": ["node_modules", "dist"],
+  "exclude": [
+    "**/*.test.*",
+    "**/__mocks__/*",
+    "**/__tests__/*",
+    "node_modules",
+    "dist"
+  ],
   "include": [
     "src/**/*"
   ]
