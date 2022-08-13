@@ -21,12 +21,28 @@
     "webpack": "^5.74.0",
     "ts-loader": "^9.3.1"
   },
+  "peerDependencies": {
+    "react": ">= 15.0.0",
+    "react-dom": ">= 15.0.0"
+  },
+  "keywords": [
+    "react",
+    "schema",
+    "microdata",
+    "schema.org"
+  ],
   "workspaces": [
     "./microdata/*",
     "./packages/*"
   ],
   "license": "Apache-2.0",
   "private": false,
+  "homepage": "https://github.com/rilexus/react-microdata",
+  "bugs": "https://github.com/rilexus/react-microdata/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rilexus/react-microdata.git"
+  },
   "author": "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)",
   "maintainers": [
     "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)"

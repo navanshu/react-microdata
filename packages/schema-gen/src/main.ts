@@ -172,20 +172,30 @@ type Node = {
 };
 
 const itemPropTemplate = (property: Property, node: Node, map: any) => {
-  const { name } = node;
   const { name: propName, scopes } = property;
 
   const capName = capitalizeFirstLetter(propName);
 
-  const imports = `import { createElement } from "react"`;
+  const imports = `import { createElement, FC, HTMLAttributes, HTMLProps } from "react"`;
   const exports = `export { ${capName} }`;
 
+  const typeTemplate = `type Type = FC<HTMLProps<HTMLAttributes<any>> & {as?: string;}>`;
+
   if (scopes.length === 1) {
-    if (scopes[0] === "Text") {
+    if (
+      scopes[0] === "Text" ||
+      // some props like the "url" on the "Person" type is of type "Url".
+      // to be able to write <Url>https://...</Url>, return a function
+      // otherwise the user would need to write <Url.Url>https://...</Url.Url>
+      // and that sucks!
+      scopes[0].toLowerCase() === propName.toLowerCase()
+    ) {
       return `
       ${imports};
-      //@ts-ignore
-      const ${capName} = ({ as = 'div', children, ...props}) => {
+      
+      ${typeTemplate};
+      
+      const ${capName}:Type = ({ as = 'div', children, ...props}) => {
         return createElement(
           as,
           {
@@ -199,11 +209,15 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
       ${exports};
     `;
     }
+
     return `
       ${imports};
        
-       const ${capName} = {
-         //@ts-ignore
+       ${typeTemplate};
+       
+       const ${capName}: {
+        ${scopes[0]}: Type
+       } = {
         ${scopes[0]}: ({ as = 'div', children, ...props}) => {
         return createElement(
           as,
@@ -231,8 +245,15 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
     return `
         ${imports};
         
-        //@ts-ignore
-        const ${capName} = ({ as = 'div', children, ...props}) => {
+        ${typeTemplate};
+       
+        const ${capName}:Type & {
+          ${s
+            .map((n) => {
+              return `${n}: Type`;
+            })
+            .join(",\n")}
+        } = ({ as = 'div', children, ...props}) => {
           return createElement(
             as,
             {
@@ -246,7 +267,6 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
         ${s
           .map((n) => {
             return `
-            //@ts-ignore
             ${capName}.${n} = ({ as = 'div', children, ...props }) => {
             return createElement(
               as,
@@ -268,8 +288,9 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
   return `
       ${imports};
       
-      //@ts-ignore
-      const ${capName} = ({ as = 'div', children, ...props}) => {
+      ${typeTemplate};
+      
+      const ${capName}:Type = ({ as = 'div', children, ...props}) => {
         return createElement(
             as,
             {
@@ -350,15 +371,17 @@ const generateFile = async (path: string, node: Node, map: any) => {
 
   const createItemTypeFile = async (path: string, node: Node) => {
     const { name } = node;
+    const typeTemplate = `type Type = FC<HTMLProps<HTMLAttributes<any>> & {as?: string;}>`;
+    const imports = `import { createElement, FC, HTMLAttributes, HTMLProps } from "react"`;
 
     if (name === "Review" || name === "Comment") {
       return writeFile(
         `${path}/${name}/src/${name}Type.ts`,
         `
-          import { createElement } from 'react';
+          ${imports};
+          ${typeTemplate};
           
-          //@ts-ignore
-          const ${name}Type = ({ as = 'div', children, ...props }) => {
+          const ${name}Type:Type = ({ as = 'div', children, ...props }) => {
             return createElement(
               as,
               {
@@ -378,10 +401,10 @@ const generateFile = async (path: string, node: Node, map: any) => {
     return writeFile(
       `${path}/${name}/src/${name}.ts`,
       `
-      import { createElement } from 'react';
+      ${imports};
+          ${typeTemplate};
       
-      //@ts-ignore
-      const ${name} = ({ as = 'div', children, ...props }) => {
+      const ${name}:Type = ({ as = 'div', children, ...props }) => {
         return createElement(
           as,
           {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createElement, FC, HTMLAttributes, HTMLProps } from "react";
 import ReactDOM from "react-dom/client";
 
 import {
@@ -15,11 +15,8 @@ import {
   Address,
 } from "@react-microdata/restaurant";
 
-import { Name, Person } from "@react-microdata/person";
-
 import { RatingValue } from "@react-microdata/rating";
 
-import { AddressLocality } from "@react-microdata/postal-address";
 import { Name as ThingName } from "@react-microdata/thing";
 import {
   Winery,
@@ -29,11 +26,49 @@ import {
 } from "@react-microdata/winery";
 
 import {
-  WebPage,
-  MainContentOfPage,
-  DatePublished,
-} from "@react-microdata/web-page";
+  Image,
+  Name,
+  Person,
+  JobTitle,
+  Colleague,
+  Url,
+  Email,
+} from "@react-microdata/person";
+
+import { AddressLocality } from "@react-microdata/postal-address";
+
 import WebPageComponent from "./components/WebPage/WebPage";
+import { StreetAddress } from "@react-microdata/postal-address";
+import { AddressRegion } from "@react-microdata/postal-address";
+import { PostalCode } from "@react-microdata/postal-address";
+import { Telephone } from "@react-microdata/person";
+
+type Type = FC<
+  HTMLProps<HTMLAttributes<any>> & {
+    as?: string;
+  }
+>;
+
+const Component: Type & { Some: Type } = ({
+  as = "div",
+  children,
+  ...props
+}) => {
+  return createElement(as, { itemProp: "", ...props }, children);
+};
+
+Component.Some = ({ as = "div", children, ...props }) => {
+  return createElement(as, { itemProp: "", ...props }, children);
+};
+
+const A = () => {
+  return (
+    <Component as={"img"}>
+      <div></div>
+      <div></div>
+    </Component>
+  );
+};
 
 const Index = () => {
   return (
@@ -72,6 +107,33 @@ const Index = () => {
       </Person>
 
       <WebPageComponent />
+
+      <Person>
+        <Name as={"span"}>Jane Doe</Name>
+        <Image as={"img"} src={"janedoe.jpg"}></Image>
+        <JobTitle as={"span"}>Professor</JobTitle>
+        <Address.PostalAddress>
+          <StreetAddress>
+            20341 Whitworth Institute 405 N. Whitworth
+          </StreetAddress>
+          <AddressLocality>Seattle</AddressLocality>
+          <AddressRegion>WA</AddressRegion>
+          <PostalCode>98052</PostalCode>
+        </Address.PostalAddress>
+        <Telephone>(425) 123-4567</Telephone>
+        <Email as={"a"} href="mailto:jane-doe@xyz.edu">
+          jane-doe@xyz.edu
+        </Email>
+        <Url as={"a"} href="http://www.janedoe.com">
+          janedoe.com
+        </Url>
+        <Colleague as={"a"} href="http://www.xyz.edu/students/alicejones.html">
+          Alice Jones
+        </Colleague>
+        <Colleague as={"a"} href="http://www.xyz.edu/students/bobsmith.html">
+          Bob Smith
+        </Colleague>
+      </Person>
     </div>
   );
 };

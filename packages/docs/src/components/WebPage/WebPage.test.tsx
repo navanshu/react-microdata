@@ -5,12 +5,14 @@ import {
   WebPage,
   Breadcrumb,
   Award,
+  Url,
 } from "@react-microdata/web-page";
 
 describe("WebPage", () => {
   it("should ", function () {
     const { getByTestId } = render(
       <WebPage data-testid={"web-page"}>
+        <Url data-testid={"url"}>url</Url>
         <Award data-testid={"award"}>award</Award>
         <Breadcrumb data-testid={"breadcrumb"}>1/2/3/4</Breadcrumb>
         <MainContentOfPage.WebPageElement data-testid={"webPageElement"}>
@@ -25,7 +27,12 @@ describe("WebPage", () => {
     const breadcrumb = getByTestId("breadcrumb");
     const award = getByTestId("award");
     const webPageElement = getByTestId("webPageElement");
+    const url = getByTestId("url");
 
+    //
+    expect(url).toHaveAttribute("itemprop", "url");
+    expect(url).toHaveTextContent("url");
+    //
     expect(webPage).toHaveAttribute("itemtype", "https://schema.org/WebPage");
     expect(webPage).toHaveAttribute("itemscope", "");
     //
