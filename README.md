@@ -1,6 +1,6 @@
 # react-microdata
 
-This repo provides react wrappers for the [microdata](<https://en.wikipedia.org/wiki/Microdata_(HTML)>) format.
+This repo provides 200+ react wrappers for the [microdata](<https://en.wikipedia.org/wiki/Microdata_(HTML)>) format.
 Wrappers are auto generated based on the latest [schema.org](https://schema.org/) [jsonld](https://schema.org/version/latest/schemaorg-all-https.jsonld) schema.
 
 ## Example
