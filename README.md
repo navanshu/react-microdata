@@ -9,23 +9,23 @@ This HTML:
 
 ```html
 <div itemscope itemtype="https://schema.org/Person">
-  <span itemprop="name">Jane Doe</span>
+  <div itemprop="name">Jane Doe</div>
 
   <img src="janedoe.jpg" itemprop="image" alt="Photo of Jane Doe" />
 
-  <span itemprop="jobTitle">Professor</span>
+  <div itemprop="jobTitle">Professor</div>
 
   <div itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
-    <span itemprop="streetAddress">
+    <div itemprop="streetAddress">
       20341 Whitworth Institute 405 N. Whitworth
-    </span>
+    </div>
 
-    <span itemprop="addressLocality">Seattle</span>,
-    <span itemprop="addressRegion">WA</span>
-    <span itemprop="postalCode">98052</span>
+    <div itemprop="addressLocality">Seattle</div>,
+    <div itemprop="addressRegion">WA</div>
+    <div itemprop="postalCode">98052</div>
   </div>
 
-  <span itemprop="telephone">(425) 123-4567</span>
+  <div itemprop="telephone">(425) 123-4567</div>
 
   <a href="mailto:jane-doe@xyz.edu" itemprop="email"> jane-doe@xyz.edu </a>
 
@@ -64,12 +64,12 @@ import {
   Colleague,
 } from "@react-microdata/person";
 
-const Person = () => {
+const Component = () => {
   return (
     <Person>
-      <Name as={"span"}>Jane Doe</Name>
+      <Name>Jane Doe</Name>
       <Image as={"img"} src={"janedoe.jpg"} />
-      <JobTitle as={"span"}>Professor</JobTitle>
+      <JobTitle>Professor</JobTitle>
       <Address.PostalAddress>
         <StreetAddress>
           20341 Whitworth Institute 405 N. Whitworth
