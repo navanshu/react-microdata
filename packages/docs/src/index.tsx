@@ -42,6 +42,7 @@ import { StreetAddress } from "@react-microdata/postal-address";
 import { AddressRegion } from "@react-microdata/postal-address";
 import { PostalCode } from "@react-microdata/postal-address";
 import { Telephone } from "@react-microdata/person";
+import ProductComponent from "./components/Product/Product";
 
 type Type = FC<
   HTMLProps<HTMLAttributes<any>> & {
@@ -134,6 +135,8 @@ const Index = () => {
           Bob Smith
         </Colleague>
       </Person>
+
+      <ProductComponent />
     </div>
   );
 };
