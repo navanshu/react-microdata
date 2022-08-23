@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@react-microdata/about-page": "*",
+    "@react-microdata/audience": "*",
     "@react-microdata/postal-address": "*",
     "@react-microdata/person": "*",
     "@react-microdata/web-page": "*",

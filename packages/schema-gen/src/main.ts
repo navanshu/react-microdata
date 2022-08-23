@@ -182,20 +182,30 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
   const typeTemplate = `type Type = FC<HTMLProps<HTMLAttributes<any>> & {as?: string;}>`;
 
   if (scopes.length === 1) {
-    if (
-      scopes[0] === "Text" ||
-      // some props like the "url" on the "Person" type is of type "Url".
-      // to be able to write <Url>https://...</Url>, return a function
-      // otherwise the user would need to write <Url.Url>https://...</Url.Url>
-      // and that sucks!
-      scopes[0].toLowerCase() === propName.toLowerCase()
-    ) {
+    // if expected type is Text, return a itemprop component
+    // not to type <PropName.Text>some text</PropName.Text>
+    // we want to type <PropName>some text</PropName>
+    // same goes for the "url" property, which has one single expected type "URL"
+    if (scopes[0] === "Text" || propName === "url") {
       return `
       ${imports};
       
       ${typeTemplate};
       
-      const ${capName}:Type = ({ as = 'div', children, ...props}) => {
+      const ${scopes[0]}Type: Type = ({ as = 'div', children, ...props}) => {
+        return createElement(
+          as,
+          {
+            itemScope: true,
+            itemProp: "${propName}",
+            itemType: "https://schema.org/${scopes[0]}",
+            ...props,
+          },
+          children
+        )
+      }
+            
+      const ${capName}:Type & { ${scopes[0]}: Type } = ({ as = 'div', children, ...props}) => {
         return createElement(
           as,
           {
@@ -205,20 +215,24 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
           children
         )
       }
+       
+      ${capName}.${scopes[0]} = ${scopes[0]}Type;
 
       ${exports};
     `;
     }
 
-    return `
-      ${imports};
-       
-       ${typeTemplate};
-       
-       const ${capName}: {
-        ${scopes[0]}: Type
-       } = {
-        ${scopes[0]}: ({ as = 'div', children, ...props}) => {
+    if (scopes[0].toLowerCase() === propName.toLowerCase()) {
+      // itemprop has the same name as its itemtype
+      // instead of writing <Audience.Audience />
+      // we want to write <Audience/> so we will return a itemtype component
+
+      return `
+        ${imports};
+        
+        ${typeTemplate};
+        
+        const ${capName}: Type = ({ as = 'div', children, ...props}) => {
         return createElement(
           as,
           {
@@ -230,7 +244,46 @@ const itemPropTemplate = (property: Property, node: Node, map: any) => {
           children
         )
       }
-       };
+      
+      ${exports};
+      `;
+    }
+
+    // some props like the "url" on the "Person" type is of type "Url".
+    // to be able to write <Url>https://...</Url>, return a function
+    // otherwise the user would need to write <Url.Url>https://...</Url.Url>
+    // and that sucks!
+    return `
+      ${imports};
+       
+       ${typeTemplate};
+       
+       const ${scopes[0]}Type: Type = ({ as = 'div', children, ...props}) => {
+        return createElement(
+          as,
+          {
+            itemProp: "${propName}",
+            itemScope: true,
+            itemType: "https://schema.org/${scopes[0]}",
+            ...props,
+          },
+          children
+        )
+      }
+       
+       const ${capName}:Type & {${scopes[0]}: Type} = ({ as = 'div', children, ...props}) => {
+         return createElement(
+          as,
+          {
+            itemProp: "${propName}",
+            ...props,
+          },
+          children
+        ) 
+       }
+       
+       ${capName}.${scopes[0]} = ${scopes[0]}Type;
+       
       
       ${exports};
     `;
