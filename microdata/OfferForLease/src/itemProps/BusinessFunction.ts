@@ -1,0 +1,18 @@
+import { createElement, FC, HTMLAttributes, HTMLProps } from 'react';
+
+type Type = FC<HTMLProps<HTMLAttributes<any>> & { as?: string }>;
+
+const BusinessFunction: Type = ({ as = 'div', children, ...props }) => {
+ return createElement(
+  as,
+  {
+   itemProp: 'businessFunction',
+   itemScope: true,
+   itemType: 'https://schema.org/BusinessFunction',
+   ...props
+  },
+  children
+ );
+};
+
+export { BusinessFunction };

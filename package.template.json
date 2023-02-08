@@ -17,20 +17,12 @@
   "maintainers": [
     "Stanislav Panchenko <email@stanislavpanchenko.de> (https://stanislavpanchenko.de)"
   ],
-  "keywords": [
-    "react",
-    "schema",
-    "microdata",
-    "schema.org"
-  ],
+  "keywords": ["react", "schema", "microdata", "schema.org"],
   "dependencies": {},
   "private": false,
   "devDependencies": {},
   "main": "./dist/index.js",
-  "files": [
-    "dist/**/*",
-    "./index.ts"
-  ],
+  "files": ["dist/**/*", "./index.ts"],
   "publishConfig": {
     "access": "public"
   }

@@ -6,7 +6,5 @@
     "types": ["react", "node"],
     "rootDir": "."
   },
-  "include": [
-    "./src/**/*"
-  ]
+  "include": ["./src/**/*"]
 }

@@ -1,0 +1,18 @@
+import { createElement, FC, HTMLAttributes, HTMLProps } from 'react';
+
+type Type = FC<HTMLProps<HTMLAttributes<any>> & { as?: string }>;
+
+const WarrantyPromise: Type = ({ as = 'div', children, ...props }) => {
+ return createElement(
+  as,
+  {
+   itemProp: 'warrantyPromise',
+   itemScope: true,
+   itemType: 'https://schema.org/WarrantyPromise',
+   ...props
+  },
+  children
+ );
+};
+
+export { WarrantyPromise };

@@ -1,0 +1,53 @@
+import { CurrentExchangeRate } from './src/itemProps/CurrentExchangeRate';
+import { ExchangeRateSpread } from './src/itemProps/ExchangeRateSpread';
+import { Currency } from './src/itemProps/Currency';
+import { MainEntityOfPage } from './src/itemProps/MainEntityOfPage';
+import { AlternateName } from './src/itemProps/AlternateName';
+import { Name } from './src/itemProps/Name';
+import { PotentialAction } from './src/itemProps/PotentialAction';
+import { Image } from './src/itemProps/Image';
+import { Url } from './src/itemProps/Url';
+import { Description } from './src/itemProps/Description';
+import { SubjectOf } from './src/itemProps/SubjectOf';
+import { AdditionalType } from './src/itemProps/AdditionalType';
+import { DisambiguatingDescription } from './src/itemProps/DisambiguatingDescription';
+import { SameAs } from './src/itemProps/SameAs';
+import { Identifier } from './src/itemProps/Identifier';
+import { ExchangeRateSpecification } from './src/ExchangeRateSpecification';
+
+export {
+ ExchangeRateSpecification,
+ CurrentExchangeRate,
+ ExchangeRateSpread,
+ Currency,
+ MainEntityOfPage,
+ AlternateName,
+ Name,
+ PotentialAction,
+ Image,
+ Url,
+ Description,
+ SubjectOf,
+ AdditionalType,
+ DisambiguatingDescription,
+ SameAs,
+ Identifier
+};
+export default {
+ ExchangeRateSpecification,
+ CurrentExchangeRate,
+ ExchangeRateSpread,
+ Currency,
+ MainEntityOfPage,
+ AlternateName,
+ Name,
+ PotentialAction,
+ Image,
+ Url,
+ Description,
+ SubjectOf,
+ AdditionalType,
+ DisambiguatingDescription,
+ SameAs,
+ Identifier
+};
