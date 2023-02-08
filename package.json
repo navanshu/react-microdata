@@ -5,7 +5,6 @@
     "tsc": "tsc",
     "@react-microdata/gen": "./node_modules/@react-microdata/gen/bin/schema-gen.js",
     "gen": "npm run @react-microdata/gen -- --file=./shema.json --dest=./microdata",
-    "deploy": "npm publish --workspaces",
     "build": "npm run build --workspaces"
   },
   "devDependencies": {
